@@ -1,13 +1,13 @@
-import React, { useState, useContext, createContext } from "react";
-import ReactDOM from "react-dom";
-import styled from "styled-components";
+import React, { useState, useContext, createContext } from 'react';
+import ReactDOM from 'react-dom';
+import styled from 'styled-components';
 
-import ThemeContext from "./context";
+import ThemeContext from './context';
 
-import Comments from "./Comments";
+import Comments from './Comments';
 
 function App(props) {
-  const [theme, setTheme] = useState("light");
+  const [theme, setTheme] = useState('light');
 
   return (
     <div {...props}>
@@ -18,7 +18,7 @@ function App(props) {
 
 App = styled(App)`
   font-family: sans-serif;
-  font-family: "Nunito";
+  font-family: 'Nunito';
   text-align: center;
   box-sizing: border-box;
 
@@ -32,5 +32,5 @@ App = styled(App)`
   }
 `;
 
-const rootElement = document.getElementById("root");
+const rootElement = document.getElementById('root');
 ReactDOM.render(<App />, rootElement);

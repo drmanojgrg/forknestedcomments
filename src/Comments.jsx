@@ -7,6 +7,8 @@ import Markdown from "./Markdown";
 import Card from "./Card";
 import Button from "./Button";
 
+import firebase from "./firebase"
+
 const CommentContext = createContext({});
 
 function compare(a1, a2) {
@@ -17,7 +19,9 @@ function compare(a1, a2) {
 }
 
 function gen_comments(comments, colorindex, path) {
+  
   return comments.map((comment, i) => {
+    debugger
     return (
       <Comment
         username={comment.username}
@@ -34,7 +38,10 @@ function gen_comments(comments, colorindex, path) {
 }
 
 function Reply(props) {
+
   const [text, setText] = useState("");
+
+
   return (
     <div {...props}>
       <TextArea
@@ -189,13 +196,17 @@ Rating = styled(Rating)`
   }
 `;
 
+//// the most complicated on //////////////////////////////////////////////////////////////////////////////////////////
+//waht is props.path 
+
 function Comment(props) {
-  const [replying, setReplying] = useContext(CommentContext);
+  const [replying, setReplying] = useContext(CommentContext);  ////here replying is being used as useContext
   const [minimized, setMinimized] = useState(false);
   const [hidden, setHidden] = useState(false);
 
   useEffect(
     async () => {
+      debugger
       if (props.path.length > 2 && props.path.length % 2 === 0) {
         setHidden(true);
       }
@@ -243,11 +254,15 @@ function Comment(props) {
               <Markdown options={{ forceBlock: true }}>{props.text}</Markdown>
             </div>
             <div id="actions" className={minimized ? "hidden" : ""}>
-              <span
-                className={`${compare(replying, props.path) ? "selected" : ""}`}
+              
+            
+            <span
+                className={`${compare(replying, props.path) ? "selected" : ""}`} //if comparing replying and props.path retruns true classname will
+                /// be selected
+
                 onClick={() => {
                   if (compare(replying, props.path)) {
-                    setReplying([]);
+                    setReplying([]);// here it is intersting for how replying is being used
                   } else {
                     setReplying(props.path);
                   }
@@ -388,105 +403,48 @@ Comment = styled(Comment)`
   }
 `;
 
+//----------------------------------------------------------------------------------------------
+//function starts here 1st of all 
+//------------------------------------------------------------------------------------------------
+
 function Comments(props) {
   var [replying, setReplying] = useState([]);
-  var [comments, setComments] = useState([
-    {
-      username: "Kevin",
-      date: "3 hours ago",
-      text: "#Hello\n>quote\n\n`code`",
-      votes: 12,
-      comments: [
-        {
-          username: "Kevin",
-          date: "2 hours ago",
-          text: "^ click the minimize button to hide threads",
-          votes: 8,
-          comments: [
-            {
-              username: "Kevin",
-              date: "1 hours ago",
-              text: "<- Click the arrows to vote",
-              votes: 3,
-              comments: []
-            }
-          ]
-        },
-        {
-          username: "Kevin",
-          date: "4 hours ago",
-          text: "click on reply to open up a text prompt",
-          votes: 5,
-          comments: []
-        },
-        {
-          username: "Kevin",
-          date: "4 hours ago",
-          text: "click on reply to open up a text prompt",
-          votes: 5,
-          comments: []
-        },
-        {
-          username: "Kevin",
-          date: "4 hours ago",
-          text: "click on reply to open up a text prompt",
-          votes: 5,
-          comments: []
-        },
-        {
-          username: "Kevin",
-          date: "10 mins ago",
-          text: "this",
-          votes: 2,
-          comments: [
-            {
-              username: "Kevin",
-              date: "8 mins ago",
-              text: "is",
-              votes: 1,
-              comments: [
-                {
-                  username: "Kevin",
-                  date: "5 mins ago",
-                  text: "to",
-                  votes: 0,
-                  comments: [
-                    {
-                      username: "Kevin",
-                      date: "4 mins ago",
-                      text: "show",
-                      votes: -1,
-                      comments: [
-                        {
-                          username: "Kevin",
-                          date: "2 mins ago",
-                          text: "nesting",
-                          votes: -200,
-                          comments: []
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  ]);
 
+  var [comments, setComments] = useState([]);
+
+
+  React.useEffect(() => {
+    async function getComments(){  
+
+       const commentsGet =await firebase.db.collection('postsThreads')
+      .doc('Preventive Medicine')
+      .collection(`comments`).doc("8f7b1386-0dfc-4036-b8da-e660c656726e").get()
+
+      const comment= await commentsGet.data().comments
+
+      setComments(comment)
+
+    }
+
+    getComments()
+  }, [])
+  
   return (
     <Card {...props}>
       <span id="comments">Comments</span>
       <span id="comments_count">(9)</span>
       <Reply />
-      <CommentContext.Provider value={[replying, setReplying]}>
+      <CommentContext.Provider value={[replying, setReplying]}>      {/* here replying is being send down to all levels too all compnets area
+      as props*/}
+
         {gen_comments(comments, 0, [])}
       </CommentContext.Provider>
     </Card>
   );
 }
+
+
+
 
 export default styled(Comments)`
   max-width: 750px;
