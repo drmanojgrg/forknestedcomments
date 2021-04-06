@@ -466,59 +466,88 @@ const reducerFunction = (draft, action) => {
   // const commentsMadeObject = { comments: [...action.comments] };
 
   const { comments } = action;
-  debugger;
+
   switch (action.type) {
     case 'INIT_REDUCER':
       return (draft = action.comment); //sets the initial supply of state and master Comments
 
     case 'ADD_TO_BASE_COMMENT':
       draft.push(action.payload);
-      debugger;
+    
       return draft;
 
     case 'ADD_COMMENT':
       ////path of update///////////////
 
       const commentsObject = { comments: [...action.comments] };
+      const deepClonedObject = cloneDeep(commentsObject);
+
+      const deepdCloneComments = cloneDeep(action.comments);
+       deepdCloneComments[0].comments.push(action.payload)
+
+      
       console.log('action.props', action.path);
-      let arrayOfArrays = [];
-      function splitArray(array) {
-        let string = '';
-        while (array.length > 0) {
-          let arrayElement = array.splice(0, 1);
-          string += `[${arrayElement}].comments`;
+
+      // let arrayOfArrays = [];
+      // function splitArray(array) {
+      //   let string = '';
+      //   while (array.length > 0) {
+      //     let arrayElement = array.splice(0, 1);
+
+          
+// // const recursion = (array) => {
+// //    conts o = array;
+// //    checkAndChange(o); // check if name exists in array and change toggle and active properties
+// //    if (o.children.length > 0) { // check if has children
+// //    		o.children.forEach(v => { // if has children do the same recursion for every children
+// //       	recursion(v);
+// //       });
+// //    }
+// //    return o; // return final new object
+// }
+//               action.comments.map(()=>{})
+      //     // debugger
+      //     string += `[${arrayElement}].comments`;
+      //   }
+      //   return string;
+      // }
+
+
+  
+      // const mergedArrayPath = `comments${splitArray(action.path)}`;
+      //   debugger
+
+   function setNestedChild( obj, path, value ){
+     debugger
+    var child = obj;
+    path.forEach(function( i, idx ){
+      debugger
+        if( idx == path.length - 1 ){
+            child.comments.push(value);
         }
-        return string;
-      }
+        else {
+            child = child.comments[ i ];
+        }
+    });
+}
 
-      const deepCloned = cloneDeep(comments);
-      const mergedArrayPath = `deepCloned${splitArray(action.path)}`;
-
-      let mergedArrayPathArrayed = [mergedArrayPath];
-
-      mergedArrayPathArrayed.push('hello');
-
-      debugger;
-      deepCloned[0].comments[0].comments.push('hello');
-      debugger;
-
+setNestedChild(deepClonedObject,action.path,action.payload)
+const {comments}= deepClonedObject
+ return (draft = comments)
       //path of update done/////////////
 
       //update thed comments with path
 
       //create object then merge
 
-      debugger;
 
       // LOng is working with empty object but not with merged
 
-      // const actionWork = set({}, long, 'FUCK YOU');
-      // const emptyfa = set({ comments: [] }, long, 'fucl you');
-
-      //thismigth work but
+      // const actionWork = set(deepClonedObject, comments[0].comments[0].comments[0], action.payload);
+      // const emptyfa = set({},mergedArrayPath ,action.payload);
 
       // const smerged = merge(emptyfa, actionWork);
-      debugger;
+      // debugger;
 
     // return (draft.comments = smerged);
 
