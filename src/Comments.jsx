@@ -167,6 +167,7 @@ function Rating(props) {
         className={`material-icons ${thumbsUp ? 'selected' : ''}`}
         id='thumbs_up'
         onClick={() => {
+          debugger
           setThumbsUp(!thumbsUp);
           setThumbsDown(false);
         }}
@@ -516,13 +517,12 @@ const reducerFunction = (draft, action) => {
   
       // const mergedArrayPath = `comments${splitArray(action.path)}`;
       //   debugger
-
-   function setNestedChild( obj, path, value ){
-     debugger
+const newpath=[0,...action.path]
+   function setNestedChild( obj, newpath, value ){
+   
     var child = obj;
-    path.forEach(function( i, idx ){
-      debugger
-        if( idx == path.length - 1 ){
+    newpath.forEach(function( i, idx ){
+        if( idx == newpath.length - 1 ){
             child.comments.push(value);
         }
         else {
@@ -531,7 +531,8 @@ const reducerFunction = (draft, action) => {
     });
 }
 
-setNestedChild(deepClonedObject,action.path,action.payload)
+
+setNestedChild(deepClonedObject,newpath,action.payload)
 const {comments}= deepClonedObject
  return (draft = comments)
       //path of update done/////////////
