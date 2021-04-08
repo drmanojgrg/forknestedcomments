@@ -16,10 +16,15 @@ import Card from './Card';
 import Button from './Button';
 import firebase from './firebase';
 import { immerable, produce } from 'immer';
+import moment from 'moment';
 
 const user = 'manoj gurung';
+const userImage =
+  'https://lh3.googleusercontent.com/a-/AOh14GiZc4ZTQtVqTqZl_uYtGhWBtkN9FiWuLBpdhiTUkQ=s96-c';
 
 const CommentContext = createContext({});
+
+const chapter = 'Preventive Medicine';
 
 function compare(a1, a2) {
   if (JSON.stringify(a1) === JSON.stringify(a2)) {
@@ -62,7 +67,7 @@ function Reply(props) {
         comments: state,
         payload: {
           username: user,
-          date: 'now',
+          date: new Date(),
           text,
           votes: 0,
           comments: [],
@@ -76,12 +81,14 @@ function Reply(props) {
       comments: state,
       payload: {
         username: user,
-        date: 'now',
+        date: new Date(),
         text,
         votes: 0,
         comments: [],
       },
     });
+
+    setText('');
   };
 
   return (
@@ -161,19 +168,31 @@ function Rating(props) {
   const [thumbsUp, setThumbsUp] = useState(false);
   const [thumbsDown, setThumbsDown] = useState(false);
 
+  const dispatch = useContext(DispatchContext);
+  const state = useContext(StateContext);
+
   return (
     <div {...props}>
       <button
         className={`material-icons ${thumbsUp ? 'selected' : ''}`}
         id='thumbs_up'
         onClick={() => {
-          debugger
+          dispatch({
+            type: 'Increase_Vote_Count',
+            path: props.path,
+            comments: state,
+            payload: {
+              username: user,
+              votes: 0,
+            },
+          });
           setThumbsUp(!thumbsUp);
           setThumbsDown(false);
         }}
       >
         keyboard_arrow_up
       </button>
+
       <div
         className={`count ${thumbsUp ? 'up' : ''} ${thumbsDown ? 'down' : ''}`}
       >
@@ -181,6 +200,7 @@ function Rating(props) {
         {thumbsDown ? count - 1 : ''}
         {thumbsUp || thumbsDown ? '' : count}
       </div>
+
       <button
         className={`material-icons ${thumbsDown ? 'selected' : ''}`}
         id='thumbs_down'
@@ -240,18 +260,24 @@ Rating = styled(Rating)`
 `;
 
 function Comment(props) {
+  // is displayed by gen_comments
+
   const [replying, setReplying] = useContext(CommentContext);
   const [minimized, setMinimized] = useState(false);
   const [hidden, setHidden] = useState(false);
 
-  useEffect(async () => {
-    if (props.path.length > 2 && props.path.length % 2 === 0) {
-      setHidden(true);
-    }
-    if (props.path[props.path.length - 1] > 3) {
-      setHidden(true);
-    }
-  }, [props.path]);
+  const filterPropsFunction = ({ comments, className, colorindex, ...rest }) =>
+    rest;
+  const RatingProps = filterPropsFunction(props);
+
+  // useEffect(async () => {
+  //   if (props.path.length > 2 && props.path.length % 2 === 0) {
+  //     setHidden(true);
+  //   }
+  //   if (props.path[props.path.length - 1] > 3) {
+  //     setHidden(true);
+  //   }
+  // }, [props.path]);
 
   return (
     <div {...props}>
@@ -267,7 +293,7 @@ function Comment(props) {
       ) : (
         <>
           <div id='left' className={minimized ? 'hidden' : ''}>
-            <Rating votes={props.votes} />
+            <Rating {...RatingProps} />
           </div>
           <div id='right'>
             <div id='top'>
@@ -277,13 +303,13 @@ function Comment(props) {
                   setMinimized(!minimized);
                 }}
               >
-                [{minimized ? '+' : '-'}]
+                [{minimized ? 'show More' : 'Hide'}]
               </span>
               <span id='username'>
                 <a href=''>{props.username}</a>
               </span>
               <span id='date'>
-                <a href=''>{props.date}</a>
+                <a href=''>{'now'}</a>
               </span>
             </div>
             <div id='content' className={minimized ? 'hidden' : ''}>
@@ -292,29 +318,38 @@ function Comment(props) {
             <div id='actions' className={minimized ? 'hidden' : ''}>
               <span
                 className={`${compare(replying, props.path) ? 'selected' : ''}`}
+                /// if sets this as selected
+
                 onClick={() => {
                   if (compare(replying, props.path)) {
+                    //comprely rpelying and props.path is smaee setReply to empty  array - if epty
                     setReplying([]);
                   } else {
                     setReplying(props.path);
+                    ////set reply to props.path [0,0,1] which compares above in classname and becomes selected which
+                    //shows it up
                   }
                 }}
               >
                 reply
               </span>
+
               <span>report</span>
             </div>
+
             <Reply
               className={
-                compare(replying, props.path) && !minimized ? '' : 'hidden'
+                compare(replying, props.path) && !minimized ? '' : 'hidden' //hides the reply path click replies
               }
               path={props.path}
               // comments={}
             />
+
             <div className={`comments ${minimized ? 'hidden' : ''}`}>
               {gen_comments(props.comments, props.colorindex + 1, [
                 ...props.path,
               ])}
+              {/* recursive commment called here if more comments inside it */}
             </div>
           </div>
         </>
@@ -463,94 +498,85 @@ const DispatchContext = React.createContext();
 // }, []);
 
 let comment = [];
-const reducerFunction = (draft, action) => {
-  // const commentsMadeObject = { comments: [...action.comments] };
 
+const commentsRef = firebase.db
+  .collection('questions')
+  .doc('Preventive Medicine')
+  .collection(`questions`)
+  .doc('879ba741-ed28-437b-b053-aaa2cc9528c5');
+
+const reducerFunction = (draft, action) => {
   const { comments } = action;
+
+  const commentsRef = firebase.db
+    .collection('questions')
+    .doc('Preventive Medicine')
+    .collection(`questions`)
+    .doc('879ba741-ed28-437b-b053-aaa2cc9528c5');
 
   switch (action.type) {
     case 'INIT_REDUCER':
-      return (draft = action.comment); //sets the initial supply of state and master Comments
+      return (draft = action.comments.draft); //sets the initial supply of state and master Comments
 
     case 'ADD_TO_BASE_COMMENT':
       draft.push(action.payload);
-    
+
+      commentsRef.set({ draft });
+
       return draft;
 
     case 'ADD_COMMENT':
       ////path of update///////////////
 
-      const commentsObject = { comments: [...action.comments] };
+      const commentsObject = { comments: [...action.comments] }; //makeing an object here why wbecause nested childre
+      //function works with object here
       const deepClonedObject = cloneDeep(commentsObject);
+      const newpath = [0, ...action.path]; //correct path updated
 
-      const deepdCloneComments = cloneDeep(action.comments);
-       deepdCloneComments[0].comments.push(action.payload)
-
-      
-      console.log('action.props', action.path);
-
-      // let arrayOfArrays = [];
-      // function splitArray(array) {
-      //   let string = '';
-      //   while (array.length > 0) {
-      //     let arrayElement = array.splice(0, 1);
-
-          
-// // const recursion = (array) => {
-// //    conts o = array;
-// //    checkAndChange(o); // check if name exists in array and change toggle and active properties
-// //    if (o.children.length > 0) { // check if has children
-// //    		o.children.forEach(v => { // if has children do the same recursion for every children
-// //       	recursion(v);
-// //       });
-// //    }
-// //    return o; // return final new object
-// }
-//               action.comments.map(()=>{})
-      //     // debugger
-      //     string += `[${arrayElement}].comments`;
-      //   }
-      //   return string;
-      // }
-
-
-  
-      // const mergedArrayPath = `comments${splitArray(action.path)}`;
-      //   debugger
-const newpath=[0,...action.path]
-   function setNestedChild( obj, newpath, value ){
-   
-    var child = obj;
-    newpath.forEach(function( i, idx ){
-        if( idx == newpath.length - 1 ){
+      function setNestedChild(obj, newpath, value) {
+        var child = obj;
+        newpath.forEach(function(i, idx) {
+          if (idx == newpath.length - 1) {
             child.comments.push(value);
-        }
-        else {
-            child = child.comments[ i ];
-        }
-    });
-}
+          } else {
+            child = child.comments[i];
+          }
+        });
+      }
 
+      setNestedChild(deepClonedObject, newpath, action.payload);
+      const { comments } = deepClonedObject;
 
-setNestedChild(deepClonedObject,newpath,action.payload)
-const {comments}= deepClonedObject
- return (draft = comments)
-      //path of update done/////////////
+      draft = comments;
+      commentsRef.set({ draft });
+      return draft;
+    ////ADD comment end///////////////
 
-      //update thed comments with path
+    case 'Increase_Vote_Count':
+      const seccommentsObject = { comments: [...action.comments] }; //makeing an object here why wbecause nested childre
+      const secdeepClonedObject = cloneDeep(seccommentsObject);
 
-      //create object then merge
+      const secnewpath = [0, ...action.path]; //correct path updated
 
+      function secsetNestedChild(obj, secnewpath, value) {
+        let newchild = obj;
+        secnewpath.forEach(function(i, idx) {
+          if (idx == secnewpath.length - 1) {
+            debugger;
+            // newchild.comments.push(value);
+          } else {
+            newchild = newchild.comments[i];
+          }
+        });
+      }
 
-      // LOng is working with empty object but not with merged
+      secsetNestedChild(secdeepClonedObject, secnewpath, action.payload);
 
-      // const actionWork = set(deepClonedObject, comments[0].comments[0].comments[0], action.payload);
-      // const emptyfa = set({},mergedArrayPath ,action.payload);
+      const seccomments = secdeepClonedObject.comments;
 
-      // const smerged = merge(emptyfa, actionWork);
-      // debugger;
-
-    // return (draft.comments = smerged);
+      draft = seccomments;
+      commentsRef.set({ draft });
+      return draft;
 
     default:
       return draft;
@@ -566,21 +592,29 @@ function Comments(props) {
   const [state, dispatch] = useReducer(curriedReducerFunction, []);
 
   React.useEffect(() => {
+    let unsubscribe;
     async function getComments() {
-      const commentsGet = await firebase.db
-        .collection('postsThreads')
+      //get the data here and sends it to global state
+
+      const commentsRef = await firebase.db
+        .collection('questions')
         .doc('Preventive Medicine')
-        .collection(`comments`)
-        .doc('8f7b1386-0dfc-4036-b8da-e660c656726e')
-        .get();
+        .collection(`questions`)
+        .doc('879ba741-ed28-437b-b053-aaa2cc9528c5');
 
-      const comment = await commentsGet.data().comments;
+      unsubscribe = commentsRef.onSnapshot((doc) => {
+        if (doc && doc.exists) {
+          const commentsDoing = doc.data();
+          dispatch({ type: 'INIT_REDUCER', comments: commentsDoing });
+        }
+      });
 
-      dispatch({ type: 'INIT_REDUCER', comment });
       setComments(state);
     }
 
     getComments();
+
+    return () => unsubscribe();
   }, []);
 
   return (
@@ -589,9 +623,10 @@ function Comments(props) {
       <span id='comments_count'>(9)</span>
       <DispatchContext.Provider value={dispatch}>
         <StateContext.Provider value={state}>
-          <Reply {...props} comment={state} />
+          <Reply {...props} comment={state} />{' '}
+          {/* this is the 1st reply componeet that renders reply componte*/}
           <CommentContext.Provider value={[replying, setReplying]}>
-            {gen_comments(state, 0, [])}
+            {gen_comments(state, 0, [])} {/* the 1st recursione*/}
           </CommentContext.Provider>
         </StateContext.Provider>
       </DispatchContext.Provider>
