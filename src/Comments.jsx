@@ -9,6 +9,8 @@ import styled from 'styled-components';
 import clone from 'lodash.clone';
 import { cloneDeep, set, setWith, merge } from 'lodash';
 
+import Avatar from '@material-ui/core/Avatar';
+
 import TextArea from 'react-textarea-autosize';
 
 import Markdown from './Markdown';
@@ -97,18 +99,19 @@ function Reply(props) {
         placeholder='What are your thoughts?'
         minRows={2}
         defaultValue={text}
-        onChange={(value) => {
-          setText(value.target.value);
+        onChange={(e) => {
+          setText(e.target.value);
         }}
       />
       <div className='panel'>
         <div className='comment_as'>
           Comment as{' '}
           <a href='' className='username'>
-            {user} {userImage}
+            <Avatar alt='Remy Sharp' src={userImage} />
+            {user}
           </a>
         </div>
-        <button onClick={() => handleReply()}>COMMENT</button>
+        <Button handleReply={handleReply}>COMMENT</Button>
       </div>
     </div>
   );
@@ -196,9 +199,9 @@ function Rating(props) {
       <div
         className={`count ${thumbsUp ? 'up' : ''} ${thumbsDown ? 'down' : ''}`}
       >
-        {thumbsUp ? count + 1 : ''}
-        {thumbsDown ? count - 1 : ''}
-        {thumbsUp || thumbsDown ? '' : count}
+        {thumbsUp ? props.votes : ''}
+        {thumbsDown ? props.votes : ''}
+        {thumbsUp || thumbsDown ? '' : props.votes}
       </div>
 
       <button
@@ -305,14 +308,16 @@ function Comment(props) {
               >
                 [{minimized ? 'show More' : 'Hide'}]
               </span>
-              <span id='username'>
-                <a href=''>{props.username}</a>
-              </span>
-              <span id='date'>
-                <a href=''>{'now'}</a>
-              </span>
             </div>
             <div id='content' className={minimized ? 'hidden' : ''}>
+              <span id='username'>
+                <Avatar
+                  style={{ display: 'inline-block' }}
+                  alt='Remy Sharp'
+                  src={userImage}
+                />{' '}
+                <a href=''>{props.username}</a>
+              </span>
               <Markdown options={{ forceBlock: true }}>{props.text}</Markdown>
             </div>
             <div id='actions' className={minimized ? 'hidden' : ''}>
@@ -480,23 +485,6 @@ Comment = styled(Comment)`
 const StateContext = React.createContext();
 const DispatchContext = React.createContext();
 
-// React.useEffect(() => {
-//   async function getComments() {
-//     const commentsGet = await firebase.db
-//       .collection('postsThreads')
-//       .doc('Preventive Medicine')
-//       .collection(`comments`)
-//       .doc('8f7b1386-0dfc-4036-b8da-e660c656726e')
-//       .get();
-
-//     const comment = await commentsGet.data().comments;
-
-//     setComments(comment);
-//   }
-
-//   getComments();
-// }, []);
-
 let comment = [];
 
 const commentsRef = firebase.db
@@ -551,7 +539,6 @@ const reducerFunction = (draft, action) => {
     ////ADD comment end///////////////
 
     case 'Increase_Vote_Count': //makeing an object here why wbecause nested childre
-      debugger;
       const secdeepClonedArray = cloneDeep(action.comments);
 
       const secnewpath = [...action.path]; //correct path updated
@@ -560,13 +547,10 @@ const reducerFunction = (draft, action) => {
         let newchild = obj;
         path.forEach(function(i, idx) {
           if (idx == secnewpath.length - 1) {
-            debugger;
             newchild[i].votes = newchild[i].votes + 1;
             // newchild.comments.push(value);
           } else {
-            debugger;
             newchild = newchild[i].comments;
-            debugger;
           }
         });
       }
@@ -577,7 +561,7 @@ const reducerFunction = (draft, action) => {
       draft = secdeepClonedArray;
       commentsRef.set({ draft });
       return draft;
-
+    ////vOTING ENDS///////////////
     default:
       return draft;
   }
@@ -593,6 +577,7 @@ function Comments(props) {
 
   React.useEffect(() => {
     let unsubscribe;
+
     async function getComments() {
       //get the data here and sends it to global state
 
@@ -608,8 +593,6 @@ function Comments(props) {
           dispatch({ type: 'INIT_REDUCER', comments: commentsDoing });
         }
       });
-
-      setComments(state);
     }
 
     getComments();

@@ -1,29 +1,34 @@
-import React, { useState, useEffect, useRef } from "react";
-import styled, { keyframes } from "styled-components";
+import React, { useState, useEffect, useRef } from 'react';
+import styled, { keyframes } from 'styled-components';
 
 function Button(props) {
   const button = useRef();
   const [clicked, setClicked] = useState(false);
 
   function animate(e) {
-    var d = document.createElement("div");
-    d.className = "circle";
+    var d = document.createElement('div');
+    d.className = 'circle';
     const x = e.nativeEvent.offsetX;
     const y = e.nativeEvent.offsetY;
     d.style.left = `${x}px`;
     d.style.top = `${y}px`;
     button.current.appendChild(d);
-    d.addEventListener("animationend", function() {
+    d.addEventListener('animationend', function() {
       d.parentElement.removeChild(d);
     });
   }
+
+  const handleReply = () => {
+    props.handleReply();
+  };
 
   return (
     <button
       {...props}
       ref={button}
-      onClick={e => {
+      onClick={(e) => {
         animate(e);
+        handleReply();
       }}
     >
       {props.children}
