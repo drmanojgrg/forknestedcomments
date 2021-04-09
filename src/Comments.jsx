@@ -34,7 +34,7 @@ function compare(a1, a2) {
 }
 
 //// REcursive component here //////////////////////////////////////////////////////////////////////////////////////////
-
+//the base args are (state, 0, [])
 function gen_comments(comments, colorindex, path) {
   return comments.map((comment, i) => {
     return (
@@ -105,7 +105,7 @@ function Reply(props) {
         <div className='comment_as'>
           Comment as{' '}
           <a href='' className='username'>
-            {user}
+            {user} {userImage}
           </a>
         </div>
         <button onClick={() => handleReply()}>COMMENT</button>
@@ -270,14 +270,14 @@ function Comment(props) {
     rest;
   const RatingProps = filterPropsFunction(props);
 
-  // useEffect(async () => {
-  //   if (props.path.length > 2 && props.path.length % 2 === 0) {
-  //     setHidden(true);
-  //   }
-  //   if (props.path[props.path.length - 1] > 3) {
-  //     setHidden(true);
-  //   }
-  // }, [props.path]);
+  useEffect(async () => {
+    if (props.path.length > 2 && props.path.length % 2 === 0) {
+      setHidden(true);
+    }
+    if (props.path[props.path.length - 1] > 3) {
+      setHidden(true);
+    }
+  }, [props.path]);
 
   return (
     <div {...props}>
@@ -528,53 +528,53 @@ const reducerFunction = (draft, action) => {
     case 'ADD_COMMENT':
       ////path of update///////////////
 
-      const commentsObject = { comments: [...action.comments] }; //makeing an object here why wbecause nested childre
-      //function works with object here
-      const deepClonedObject = cloneDeep(commentsObject);
-      const newpath = [0, ...action.path]; //correct path updated
+      const deepClonedarray = cloneDeep(action.comments);
+      const newpath = [...action.path, 'stop']; //correct path updated
 
       function setNestedChild(obj, newpath, value) {
-        var child = obj;
-        newpath.forEach(function(i, idx) {
+        let child = obj;
+
+        newpath.forEach((i, idx) => {
           if (idx == newpath.length - 1) {
-            child.comments.push(value);
+            child.push(value);
           } else {
-            child = child.comments[i];
+            child = child[i].comments;
           }
         });
       }
 
-      setNestedChild(deepClonedObject, newpath, action.payload);
-      const { comments } = deepClonedObject;
+      setNestedChild(deepClonedarray, newpath, action.payload);
 
-      draft = comments;
+      draft = deepClonedarray;
       commentsRef.set({ draft });
       return draft;
     ////ADD comment end///////////////
 
-    case 'Increase_Vote_Count':
-      const seccommentsObject = { comments: [...action.comments] }; //makeing an object here why wbecause nested childre
-      const secdeepClonedObject = cloneDeep(seccommentsObject);
+    case 'Increase_Vote_Count': //makeing an object here why wbecause nested childre
+      debugger;
+      const secdeepClonedArray = cloneDeep(action.comments);
 
-      const secnewpath = [0, ...action.path]; //correct path updated
+      const secnewpath = [...action.path]; //correct path updated
 
-      function secsetNestedChild(obj, secnewpath, value) {
+      function secsetNestedChild(obj, path, value) {
         let newchild = obj;
-        secnewpath.forEach(function(i, idx) {
+        path.forEach(function(i, idx) {
           if (idx == secnewpath.length - 1) {
             debugger;
+            newchild[i].votes = newchild[i].votes + 1;
             // newchild.comments.push(value);
           } else {
-            newchild = newchild.comments[i];
+            debugger;
+            newchild = newchild[i].comments;
+            debugger;
           }
         });
       }
+      //muates decDeepsecdeepClonedObject
 
-      secsetNestedChild(secdeepClonedObject, secnewpath, action.payload);
+      secsetNestedChild(secdeepClonedArray, secnewpath, action.payload);
 
-      const seccomments = secdeepClonedObject.comments;
-
-      draft = seccomments;
+      draft = secdeepClonedArray;
       commentsRef.set({ draft });
       return draft;
 
